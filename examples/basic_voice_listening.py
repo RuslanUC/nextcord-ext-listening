@@ -1,39 +1,28 @@
-# This example uses slash commands. You can learn more about them by looking at https://github.com/Rapptz/discord.py/blob/master/examples/app_commands/basic.py
+# This example uses slash commands. You can learn more about them by looking at
+# https://github.com/nextcord/nextcord/blob/master/examples/application_commands/slash_command.py
 
-from typing import Literal, Optional
-from dotenv import load_dotenv
+from typing import Literal, Optional, cast
 import os
 import subprocess
 
-import discord
-from discord import app_commands
-from discord.ext import listening
+from nextcord import Intents, Interaction, TextChannel, File, SlashOption, Client
+from nextcord import VoiceClient as DiscordVoiceClient
+
+from nextcord.ext.listening import AudioProcessPool, WaveAudioFile, MP3AudioFile, VoiceClient, AudioFile, AudioFileSink
 
 
-class Client(discord.Client):
-    GUILD = discord.Object(id=592956400875864085)
 
-    def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
-        self.tree = app_commands.CommandTree(self)
-
-    async def setup_hook(self):
-        # This copies the global commands over to your guild.
-        self.tree.copy_global_to(guild=self.GUILD)
-        await self.tree.sync(guild=self.GUILD)
-
-
-intents = discord.Intents.default()
+intents = Intents.default()
 client = Client(intents=intents)
 # pool that will be used for processing audio
 # 1 signifies having 1 process in the pool
-process_pool = listening.AudioProcessPool(1)
+process_pool = AudioProcessPool(1)
 
 # Maps a file format to a sink object
-FILE_FORMATS = {"mp3": listening.MP3AudioFile, "wav": listening.WaveAudioFile}
+FILE_FORMATS = {"mp3": MP3AudioFile, "wav": WaveAudioFile}
 
 
-async def is_in_guild(interaction: discord.Interaction):
+async def is_in_guild(interaction: Interaction):
     # If this interaction was invoked outside a guild
     if interaction.guild is None:
         await interaction.response.send_message("This command can only be used within a server.")
@@ -41,25 +30,25 @@ async def is_in_guild(interaction: discord.Interaction):
     return True
 
 
-async def get_vc(interaction: discord.Interaction) -> Optional[listening.VoiceClient]:
+async def get_vc(interaction: Interaction) -> Optional[VoiceClient]:
     # If the bot is currently in a vc
     if interaction.guild.voice_client is not None:
         # If the bot is in a vc other than the one of the user invoking the command
         if interaction.guild.voice_client.channel != interaction.user.voice.channel:
             # Move to the vc of the user invoking the command.
-            await interaction.guild.voice_client.move_to(interaction.user.voice.channel)
+            await cast(VoiceClient, interaction.guild.voice_client).move_to(interaction.user.voice.channel)
         return interaction.guild.voice_client
     # If the user invoking the command is in a vc, connect to it
     if interaction.user.voice is not None:
-        return await interaction.user.voice.channel.connect(cls=listening.VoiceClient)
+        return await interaction.user.voice.channel.connect(cls=VoiceClient)
 
 
-async def change_deafen_state(vc: discord.VoiceClient, deafen: bool) -> None:
+async def change_deafen_state(vc: DiscordVoiceClient, deafen: bool) -> None:
     state = vc.guild.me.voice
     await vc.guild.change_voice_state(channel=vc.channel, self_mute=state.self_mute, self_deaf=deafen)
 
 
-async def send_audio_file(channel: discord.TextChannel, file: listening.AudioFile):
+async def send_audio_file(channel: TextChannel, file: AudioFile):
     # Get the user id of this audio file's user if possible
     # If it's not None, then it's either a `Member` or `Object` object, both of which have an `id` attribute.
     user = file.user if file.user is None else file.user.id
@@ -69,7 +58,7 @@ async def send_audio_file(channel: discord.TextChannel, file: listening.AudioFil
     try:
         await channel.send(
             f"Audio file for <@{user}>" if user is not None else "Could not resolve this file to a user...",
-            file=discord.File(file.path),
+            file=File(file.path),
         )
     except ValueError:
         await channel.send(
@@ -82,7 +71,7 @@ async def send_audio_file(channel: discord.TextChannel, file: listening.AudioFil
 # The key word arguments passed in the listen function MUST have the same name.
 # You could alternatively do on_listen_finish(sink, exc, channel, ...) because exc is always passed
 # regardless of if it's None or not.
-async def on_listen_finish(sink: listening.AudioFileSink, exc=None, channel=None):
+async def on_listen_finish(sink: AudioFileSink, exc=None, channel=None):
     # Convert the raw recorded audio to its chosen file type
     # kwargs can be specified to convert_files, which will be specified to each AudioFile.convert call
     # here, the stdout and stderr kwargs go to asyncio.create_subprocess_exec for ffmpeg
@@ -102,11 +91,8 @@ async def on_ready():
     print('------')
 
 
-@client.tree.command(description="Join the vc you're in and begin recording.")
-@app_commands.describe(
-    file_format=f"The file format to write the audio data to. Valid types: {', '.join(FILE_FORMATS.keys())}"
-)
-async def start(interaction: discord.Interaction, file_format: Literal["mp3", "wav"] = "mp3"):
+@client.slash_command(description="Join the vc you're in and begin recording.")
+async def start(interaction: Interaction, file_format: Literal["mp3", "wav"] = SlashOption(default="mp3", description=f"The file format to write the audio data to. Valid types: {', '.join(FILE_FORMATS.keys())}")):
     if not await is_in_guild(interaction):
         return
     # Check that a valid file format was provided.
@@ -129,7 +115,7 @@ async def start(interaction: discord.Interaction, file_format: Literal["mp3", "w
     # record the audio to file for us. We're also passing the on_listen_finish function
     # which will be called when listening has finished.
     vc.listen(
-        listening.AudioFileSink(FILE_FORMATS[file_format], "audio-output"),
+        AudioFileSink(FILE_FORMATS[file_format]),
         process_pool,
         after=on_listen_finish,
         channel=interaction.channel
@@ -137,14 +123,14 @@ async def start(interaction: discord.Interaction, file_format: Literal["mp3", "w
     await interaction.response.send_message("Started recording.")
 
 
-@client.tree.command(description="Stop the current recording.")
-async def stop(interaction: discord.Interaction):
+@client.slash_command(description="Stop the current recording.")
+async def stop(interaction: Interaction):
     if not await is_in_guild(interaction):
         return
     # Make sure we're currently in vc and recording.
     if interaction.guild.voice_client is None or not (await get_vc(interaction)).is_listen_receiving():
         return await interaction.response.send_message("Not currently recording.")
-    vc = interaction.guild.voice_client
+    vc = cast(VoiceClient, interaction.guild.voice_client)
     # Stop listening and disconnect from vc. The after function passed to vc.listen in the start command
     # will be called after listening stops.
     vc.stop_listening()
@@ -152,14 +138,14 @@ async def stop(interaction: discord.Interaction):
     await vc.disconnect()
 
 
-@client.tree.command(description="Pause the current recording.")
-async def pause(interaction: discord.Interaction):
+@client.slash_command(description="Pause the current recording.")
+async def pause(interaction: Interaction):
     if not await is_in_guild(interaction):
         return
     # Make sure we're currently in vc and recording.
     if interaction.guild.voice_client is None or not (await get_vc(interaction)).is_listen_receiving():
         return await interaction.response.send_message("Not currently recording.")
-    vc = interaction.guild.voice_client
+    vc = cast(VoiceClient, interaction.guild.voice_client)
     # Make sure we're not already paused
     if vc.is_listening_paused():
         return await interaction.response.send_message("Recording is already paused.")
@@ -170,14 +156,14 @@ async def pause(interaction: discord.Interaction):
     await interaction.response.send_message("Recording paused.")
 
 
-@client.tree.command(description="Resume the current recording.")
-async def resume(interaction: discord.Interaction):
+@client.slash_command(description="Resume the current recording.")
+async def resume(interaction: Interaction):
     if not await is_in_guild(interaction):
         return
     # Make sure we're currently in vc and recording.
     if interaction.guild.voice_client is None or not (await get_vc(interaction)).is_listen_receiving():
         return await interaction.response.send_message("Not currently recording.")
-    vc = interaction.guild.voice_client
+    vc = cast(VoiceClient, interaction.guild.voice_client)
     # Make sure we're paused
     if not vc.is_listening_paused():
         return await interaction.response.send_message("Recording is already resumed.")
@@ -189,7 +175,6 @@ async def resume(interaction: discord.Interaction):
 
 # THIS IF STATEMENT IS IMPORTANT FOR USING THIS EXTENSION (because of multiprocessing)
 if __name__ == "__main__":
-    load_dotenv()
     try:
         client.run(os.getenv("DISCORD_TOKEN"))
     finally:

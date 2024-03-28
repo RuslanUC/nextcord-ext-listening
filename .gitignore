@@ -4,7 +4,10 @@ audio-output/
 .env
 *.pyc
 
-discord/*
-!discord/ext/
-discord/ext/*
-!discord/ext/listening
+nextcord/*
+!nextcord/ext/
+nextcord/ext/*
+!nextcord/ext/listening
+build
+dist
+*.egg-info

@@ -1,9 +1,12 @@
-This is a [discord.py](https://github.com/rapptz/discord.py/) extension with functionality for listening in voice 
+**This is a fork of [Sheppsu/discord-ext-listening](https://github.com/Sheppsu/discord-ext-listening) changed to be used with nextcord instead of discord.py**
+
+This is a [nextcord](https://github.com/nextcord/nextcord) extension with functionality for listening in voice 
 channels. It uses Python's standard multiprocessing library for audio processing, striving for efficiency and a 
 flexible design.
 
 # How to use
-`pip install git+https://github.com/Sheppsu/discord-ext-listening`
+<!--`pip install nextcord-ext-listening`-->
+`pip install git+https://github.com/RuslanUC/nextcord-ext-listening`
 
 Check examples folder to see how to use.
 I might get some actual documentation up eventually.

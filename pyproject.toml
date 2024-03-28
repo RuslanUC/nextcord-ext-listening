@@ -14,7 +14,7 @@ line_length = 125
 
 [tool.pyright]
 include = [
-    "discord/ext/listening"
+    "nextcord/ext/listening"
 ]
 exclude = [
     "**/__pycache__",

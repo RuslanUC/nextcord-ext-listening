@@ -6,11 +6,11 @@ import threading
 from concurrent.futures import Future
 from typing import Any, Awaitable, Callable, Dict, Optional, Union
 
-from discord.errors import ClientException
-from discord.member import Member
-from discord.object import Object
-from discord.voice_client import VoiceClient as BaseVoiceClient
-from discord.gateway import DiscordVoiceWebSocket
+from nextcord.errors import ClientException
+from nextcord.member import Member
+from nextcord.object import Object
+from nextcord.voice_client import VoiceClient as BaseVoiceClient
+from nextcord.gateway import DiscordVoiceWebSocket
 
 from . import opus
 from .enums import RTCPMessageType
@@ -227,7 +227,7 @@ class VoiceClient(BaseVoiceClient):
         else:
             user = self.guild.get_member(user_id)
             self._ssrc_map[ssrc] = {
-                "user": user if user is not None else Object(id=user_id, type=Member),
+                "user": user if user is not None else Object(id=user_id),
                 "speaking": speaking,
             }
 

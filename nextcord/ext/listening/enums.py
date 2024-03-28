@@ -1,4 +1,4 @@
-from discord.enums import Enum
+from nextcord.enums import Enum
 
 __all__ = ("RTCPMessageType",)
 

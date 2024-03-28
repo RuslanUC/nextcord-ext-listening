@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from discord.gateway import DiscordVoiceWebSocket
+from nextcord.gateway import DiscordVoiceWebSocket
 
 from .voice_client import VoiceClient
 

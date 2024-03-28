@@ -1,4 +1,4 @@
-from discord.opus import Decoder as BaseDecoder
+from nextcord.opus import Decoder as BaseDecoder
 
 __all__ = ("Decoder",)
 

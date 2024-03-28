@@ -8,15 +8,15 @@ from collections import defaultdict
 from concurrent.futures import Future
 from dataclasses import dataclass
 from time import monotonic
-from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Callable, Dict, List, Optional, Sequence, Tuple, Union, Iterable
 
-from discord.object import Object
+from nextcord.object import Object
 
 from .enums import RTCPMessageType
 from .opus import Decoder as OpusDecoder
 
 if TYPE_CHECKING:
-    from discord.member import Member
+    from nextcord.member import Member
 
 
 __all__ = (
@@ -833,7 +833,7 @@ class AudioFileSink(AudioHandlingSink):
         self.done = True
         self._clean_lock.release()
 
-    async def convert_files(self, *args, **kwargs) -> Optional[List[Future]]:
+    async def convert_files(self, *args, **kwargs) -> Optional[Iterable[Future]]:
         """Calls cleanup if it hasn't already been called and
         then calls convert on all :class:`AudioFile` objects in output_files.
 
@@ -1004,7 +1004,7 @@ class AudioFile:
         self.done = True
         self._clean_lock.release()
 
-    async def convert(self, new_name: Optional[str] = None) -> None:
+    async def convert(self, new_name: Optional[str] = None, *args, **kwargs) -> None:
         """Converts the file to its formatted file type.
 
         This function is abstract. Any implementation of this function should
