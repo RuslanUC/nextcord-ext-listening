@@ -40,7 +40,7 @@ packages = [
 setup(
     name="nextcord-ext-listening",
     author="Sheppsu",
-    url="github.com/RuslanUC/nextcord-ext-listening",
+    url="https://github.com/RuslanUC/nextcord-ext-listening",
     project_urls={
         # TODO
     },

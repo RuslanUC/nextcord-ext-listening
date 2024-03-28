@@ -5,8 +5,7 @@ channels. It uses Python's standard multiprocessing library for audio processing
 flexible design.
 
 # How to use
-<!--`pip install nextcord-ext-listening`-->
-`pip install git+https://github.com/RuslanUC/nextcord-ext-listening`
+`pip install nextcord-ext-listening`
 
 Check examples folder to see how to use.
 I might get some actual documentation up eventually.
